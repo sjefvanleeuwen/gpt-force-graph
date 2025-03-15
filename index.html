@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beehive Ecosystem Knowledge Graph</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            overflow: hidden;
+        }
+        svg {
+            width: 100vw;
+            height: 100vh;
+            background-color: #fdf6e3;
+        }
+        .link {
+            stroke: #888;
+            stroke-opacity: 0.7;
+            stroke-width: 2px;
+            marker-end: url(#arrow);
+        }
+        .node {
+            fill: #ffcc00;
+            stroke: #663300;
+            stroke-width: 2px;
+        }
+        .predator {
+            fill: #ff6666;
+        }
+        .plant {
+            fill: #66cc66;
+        }
+        text {
+            font-size: 12px;
+            pointer-events: none;
+            fill: #663300;
+        }
+    </style>
+</head>
+<body>
+    <svg></svg>
+    <script>
+        const data = {
+            nodes: [
+                { id: "Queen Bee" },
+                { id: "Worker Bee" },
+                { id: "Drone" },
+                { id: "Guard Bee" },
+                { id: "Hive" },
+                { id: "Honeycomb" },
+                { id: "Eggs" },
+                { id: "Larva" },
+                { id: "Pupa" },
+                { id: "Honey" },
+                { id: "Pollen" },
+                { id: "Nectar" },
+                { id: "Propolis" },
+                { id: "Bee Bread" },
+                { id: "Bee Wax" },
+                { id: "Sunflower", group: "plant" },
+                { id: "Clover", group: "plant" },
+                { id: "Apple Tree", group: "plant" },
+                { id: "Spider", group: "predator" },
+                { id: "Bird", group: "predator" },
+                { id: "Bear", group: "predator" },
+            ],
+            links: [
+                { source: "Queen Bee", target: "Eggs", type: "lays" },
+                { source: "Eggs", target: "Larva", type: "hatches into" },
+                { source: "Larva", target: "Pupa", type: "develops into" },
+                { source: "Pupa", target: "Worker Bee", type: "becomes" },
+                { source: "Pupa", target: "Drone", type: "becomes" },
+                { source: "Pupa", target: "Queen Bee", type: "becomes" },
+                { source: "Worker Bee", target: "Honey", type: "produces" },
+                { source: "Worker Bee", target: "Bee Wax", type: "produces" },
+                { source: "Worker Bee", target: "Bee Bread", type: "creates" },
+                { source: "Worker Bee", target: "Honeycomb", type: "builds" },
+                { source: "Worker Bee", target: "Hive", type: "maintains" },
+                { source: "Worker Bee", target: "Pollen", type: "collects" },
+                { source: "Worker Bee", target: "Nectar", type: "collects" },
+                { source: "Worker Bee", target: "Propolis", type: "collects" },
+                { source: "Guard Bee", target: "Hive", type: "protects" },
+                { source: "Drone", target: "Queen Bee", type: "mates with" },
+                { source: "Hive", target: "Honeycomb", type: "contains" },
+                { source: "Hive", target: "Honey", type: "stores" },
+                { source: "Hive", target: "Bee Wax", type: "produces" },
+                { source: "Clover", target: "Pollen", type: "provides" },
+                { source: "Sunflower", target: "Pollen", type: "provides" },
+                { source: "Apple Tree", target: "Pollen", type: "provides" },
+                { source: "Worker Bee", target: "Clover", type: "pollinates" },
+                { source: "Worker Bee", target: "Sunflower", type: "pollinates" },
+                { source: "Worker Bee", target: "Apple Tree", type: "pollinates" },
+                { source: "Bear", target: "Hive", type: "attacks" },
+                { source: "Spider", target: "Worker Bee", type: "traps" },
+                { source: "Bird", target: "Drone", type: "feeds on" }
+            ]
+        };
+
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const svg = d3.select("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        svg.append("defs").append("marker")
+            .attr("id", "arrow")
+            .attr("viewBox", "0 -5 10 10")
+            .attr("refX", 22)
+            .attr("refY", 0)
+            .attr("markerWidth", 6)
+            .attr("markerHeight", 6)
+            .attr("orient", "auto")
+            .append("path")
+            .attr("d", "M0,-5L10,0L0,5")
+            .attr("fill", "#888");
+
+        const simulation = d3.forceSimulation(data.nodes)
+            .force("link", d3.forceLink(data.links).id(d => d.id).distance(150))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(data.links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        const linkLabels = svg.append("g")
+            .selectAll("text")
+            .data(data.links)
+            .enter().append("text")
+            .attr("font-size", "12px")
+            .attr("dy", -5)
+            .text(d => d.type);
+
+        const node = svg.append("g")
+            .selectAll("circle")
+            .data(data.nodes)
+            .enter().append("circle")
+            .attr("class", d => "node " + (d.group || ""))
+            .attr("r", 15)
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        const labels = svg.append("g")
+            .selectAll("text")
+            .data(data.nodes)
+            .enter().append("text")
+            .attr("dy", 4)
+            .attr("dx", 18)
+            .text(d => d.id);
+
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            linkLabels.attr("x", d => (d.source.x + d.target.x) / 2)
+                      .attr("y", d => (d.source.y + d.target.y) / 2);
+
+            node.attr("cx", d => d.x).attr("cy", d => d.y);
+            labels.attr("x", d => d.x).attr("y", d => d.y);
+        });
+
+        function dragstarted(event, d) { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; }
+        function dragged(event, d) { d.fx = event.x; d.fy = event.y; }
+        function dragended(event, d) { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }
+    </script>
+</body>
+</html>
