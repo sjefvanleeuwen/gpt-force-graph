@@ -1,8 +1,6 @@
 # Understanding the D3.js Force-Directed Graph Prompt for a Beehive Ecosystem
 
-prompt: "_Create a D3.js force-directed graph that visualizes a knowledge graph as triples (subject → predicate → object). Use labeled edges to represent relationships between entities. The graph should be interactive, with nodes and links dynamically arranged. Show the direction of the relationship._"
-
-The topic is visualize a beehive be as complete as possible within its ecosystem.
+prompt: _"Create a D3.js force-directed graph that visualizes a knowledge graph as triples (subject → predicate → object). Use labeled edges to represent relationships between entities. The graph should be interactive, with nodes and links dynamically arranged. Show the direction of the relationship. The topic is visualize a beehive be as complete as possible within its ecosystem."_
 
 ## **How the Prompt Works**
 
